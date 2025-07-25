@@ -30,3 +30,7 @@ This repository is built using [SLAB](https://github.com/xinghaochen/SLAB), [DHV
 
 ## 📖 4. Citation
 If you find this repository helpful, please consider citing:
+```bash
+@Article{xxx
+}
+```
