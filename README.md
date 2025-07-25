@@ -21,6 +21,23 @@ CUDA_VISIBLE_DEVICES=0,1 python tracking/train.py --script ostrack --config sela
 
 ## ✨ 2. Inference Scripts
 
+To eval SELA-ViT-T on the ImageNet-1K dataset on a single gpu, please identify the path of pretrained weight and run:
+```bash
+CUDA_VISIBLE_DEVICES=0 python -m torch.distributed.launch --master_port 12345 --nproc_per_node=1 main_loss.py --cfg cfgs/deit_t.yaml --data-path /data2/saizhou777/ImageNet --output /data2/saizhou777/sela-main/classification/output/deit_tiny_patch16_224 --eval --resume /data2/saizhou777/sela-main/classification/output/deit_tiny_patch16_224/tiny/ckpt_epoch_300.pth
+```
+This will give
+```bash
+Acc@1 76.968 Acc@5 93.442
+```
+
+To eval SELA-DeiT-T on the ImageNet-1K dataset on a single gpu, please run:
+```bash
+CUDA_VISIBLE_DEVICES=0 python -m torch.distributed.launch --master_port 12345 --nproc_per_node=1 main_loss.py --cfg cfgs/deit_t.yaml --data-path /data2/saizhou777/ImageNet --output /data2/saizhou777/sela-main/classification/output/deit_tiny_patch16_224 --eval --resume /data2/saizhou777/SLAB-main/classification/output/deit_tiny_patch16_224/sela_300/ckpt_epoch_300.pth
+```
+This will give
+```bash
+Acc@1 75.834 Acc@5 92.772
+```
 
 
 ## 👏 3. Acknowledgement
