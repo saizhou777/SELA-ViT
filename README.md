@@ -38,7 +38,8 @@ This will give
 ```bash
 Acc@1 75.834 Acc@5 92.772
 ```
-
+## Update
+We release the ImageNet-1K pretrained checkpoints for SELA-ViT-T and SELA-DeiT-T. Available here: [SELA-ViT-T](https://github.com/saizhou777/SELA-ViT/releases/download/v1.0.0/sela_vit_t_770.pth) | [SELA-DeiT-T](https://github.com/saizhou777/SELA-ViT/releases/download/v1.0.0/sela_deit_t_758.pth).
 
 ## 👏 3. Acknowledgement
 This repository is built using [SLAB](https://github.com/xinghaochen/SLAB), [DHVT](https://github.com/ArieSeirack/DHVT), and [OSTrack](https://github.com/botaoye/OSTrack) repositories. We particularly appreciate their open-source efforts.
@@ -46,7 +47,13 @@ This repository is built using [SLAB](https://github.com/xinghaochen/SLAB), [DHV
 
 ## 📖 4. Citation
 If you find this repository helpful, please consider citing:
-```bash
-@Article{xxx
+```bibtex
+@article{zhou2026selavit,
+  title={Enhancing Vision Transformer with Shift Expansion Linear Attention for Image Classification and Object Tracking},
+  author={Zhou, Sai and Liu, Meiqin and Zhou, Jing and Zheng, Ronghao},
+  journal={IEEE Transactions on Circuits and Systems for Video Technology},
+  year={2026},
+  publisher={IEEE},
+  doi={10.1109/TCSVT.2026.3662708.}
 }
 ```
