@@ -32,7 +32,7 @@ DATA:
     - 1
     SAMPLE_PER_EPOCH: 10000
 MODEL:
-  PRETRAIN_FILE: "/data2/saizhou777/OSTrack-main/sela_300.pth" #"/data2/saizhou777/OSTrack-main/deit_300.pth" #"mae_pretrain_vit_base.pth"
+  PRETRAIN_FILE: "/data2/saizhou777/OSTrack-main/sela_deit_300.pth" #"/data2/saizhou777/OSTrack-main/deit_300.pth" #"mae_pretrain_vit_base.pth"
   EXTRA_MERGER: False
   RETURN_INTER: False
   BACKBONE:
