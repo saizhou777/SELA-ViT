@@ -8,11 +8,11 @@ from timm.models.layers import DropPath, to_2tuple, trunc_normal_
 from lib.models.ostrack.utils import combine_tokens, recover_tokens
 
 
+
 class SELABackbone(nn.Module):
     def __init__(self):
         super().__init__()
 
-        # for SELA-ViT (no global pos_embed, uses ConvPosEnc instead)
         self.pos_embed = None  
         self.img_size = [224, 224]
         self.patch_size = 16
@@ -42,19 +42,51 @@ class SELABackbone(nn.Module):
         self.return_stage = cfg.MODEL.RETURN_STAGES
         self.add_sep_seg = cfg.MODEL.BACKBONE.SEP_SEG
 
+
         if new_patch_size != self.patch_size:
-            print('SELA-ViT patch size updated for tracking')
-            self.patch_size = new_patch_size
+            print('Inconsistent Patch Size With The Pretrained Weights, Interpolate The Weight!')
+            old_patch_embed = {}
+            for name, param in self.patch_embed.named_parameters():
+                if 'weight' in name:
+                    param = nn.functional.interpolate(param, size=(new_patch_size, new_patch_size),
+                                                      mode='bicubic', align_corners=False)
+                    param = nn.Parameter(param)
+                old_patch_embed[name] = param
 
-        search_H, search_W = search_size
-        template_H, template_W = template_size
-        
-        actual_stride = 16  
-        search_patch_H, search_patch_W = search_H // actual_stride, search_W // actual_stride
-        template_patch_H, template_patch_W = template_H // actual_stride, template_W // actual_stride
+            from lib.models.ostrack.sela_deit import PatchEmbed
+            self.patch_embed = PatchEmbed(img_size=self.img_size, patch_size=new_patch_size, in_chans=3,
+                                          embed_dim=self.embed_dim)
+            self.patch_embed.proj.bias = old_patch_embed['proj.bias']
+            self.patch_embed.proj.weight = old_patch_embed['proj.weight']
 
-        self.pos_embed_z = nn.Parameter(torch.zeros(1, template_patch_H * template_patch_W, self.embed_dim))
-        self.pos_embed_x = nn.Parameter(torch.zeros(1, search_patch_H * search_patch_W, self.embed_dim))
+
+        # for patch embedding
+        patch_pos_embed = self.pos_embed[:, patch_start_index:, :]
+        patch_pos_embed = patch_pos_embed.transpose(1, 2)
+        B, E, Q = patch_pos_embed.shape
+        P_H, P_W = self.img_size[0] // self.patch_size, self.img_size[1] // self.patch_size
+        patch_pos_embed = patch_pos_embed.view(B, E, P_H, P_W)
+
+
+        # for search region
+        H, W = search_size
+        new_P_H, new_P_W = H // new_patch_size, W // new_patch_size
+        search_patch_pos_embed = nn.functional.interpolate(patch_pos_embed, size=(new_P_H, new_P_W), mode='bicubic',
+                                                           align_corners=False)
+        search_patch_pos_embed = search_patch_pos_embed.flatten(2).transpose(1, 2)
+
+
+        # for template region
+        H, W = template_size
+        new_P_H, new_P_W = H // new_patch_size, W // new_patch_size
+        template_patch_pos_embed = nn.functional.interpolate(patch_pos_embed, size=(new_P_H, new_P_W), mode='bicubic',
+                                                             align_corners=False)
+        template_patch_pos_embed = template_patch_pos_embed.flatten(2).transpose(1, 2)
+
+
+        self.pos_embed_z = nn.Parameter(template_patch_pos_embed)
+        self.pos_embed_x = nn.Parameter(search_patch_pos_embed)
+
 
         # separate token and segment token
         if self.add_sep_seg:
@@ -62,6 +94,7 @@ class SELABackbone(nn.Module):
             self.template_segment_pos_embed = trunc_normal_(self.template_segment_pos_embed, std=.02)
             self.search_segment_pos_embed = nn.Parameter(torch.zeros(1, 1, self.embed_dim))
             self.search_segment_pos_embed = trunc_normal_(self.search_segment_pos_embed, std=.02)
+
 
         if self.return_inter:
             for i_layer in self.return_stage:
@@ -71,7 +104,8 @@ class SELABackbone(nn.Module):
                     layer_name = f'norm{i_layer}'
                     self.add_module(layer_name, layer)
 
-    
+
+
 
     def forward_features(self, z, x):
         B, H, W = x.shape[0], x.shape[2], x.shape[3]
@@ -82,12 +116,14 @@ class SELABackbone(nn.Module):
         lens_z = z.shape[1]
         lens_x = x.shape[1]
 
+
         z += self.pos_embed_z
         x += self.pos_embed_x
 
         if self.add_sep_seg:
             x += self.search_segment_pos_embed
             z += self.template_segment_pos_embed
+
 
         x = combine_tokens(z, x, mode=self.cat_mode)
         x = self.pos_drop(x)
