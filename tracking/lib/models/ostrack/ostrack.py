@@ -10,7 +10,7 @@ from torch.nn.modules.transformer import _get_clones
 from lib.models.layers.head import build_box_head
 from lib.models.ostrack.vit import vit_base_patch16_224, vit_tiny_patch16_224
 from lib.models.ostrack.deit import deit_tiny_patch16_224
-from lib.models.ostrack.sela_vit_lepe_cpe import sela_tiny_patch16_224
+from lib.models.ostrack.sela_deit import sela_tiny_patch16_224
 from lib.utils.box_ops import box_xyxy_to_cxcywh
 
 
